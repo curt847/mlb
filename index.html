@@ -935,10 +935,11 @@ a:hover { border-bottom-color: var(--sedona); }
   .mlb-section { margin: 1.5rem 0; }
   .mlb-section h2 { font-family: 'Fraunces', serif; font-style: italic; margin: 0 0 0.5rem; }
   .mlb-team-pill {
-    display: inline-block; background: #1e3a8a; color: #fff;
+    display: inline-block; color: #fff;
     font-size: 10px; padding: 2px 6px; border-radius: 3px;
     font-family: 'JetBrains Mono', monospace; margin-right: 6px;
     text-transform: uppercase; letter-spacing: 0.04em;
+    background: #555;  /* fallback */
   }
   .freshness-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -950,9 +951,11 @@ a:hover { border-bottom-color: var(--sedona); }
   }
   .freshness-cell.fresh   { border-left: 3px solid #15803d; }
   .freshness-cell.stale   { border-left: 3px solid #b45309; }
+  .freshness-cell.started { border-left: 3px solid #999; opacity: 0.55; }
   .freshness-cell.missing { border-left: 3px solid #b53a30; opacity: 0.6; }
   .freshness-cell .ft-team { font-weight: 700; }
   .freshness-cell .ft-age  { color: #666; }
+  .freshness-cell .ft-status { font-style: italic; color: #555; }
 </style>
 </head>
 <body>
@@ -963,7 +966,7 @@ a:hover { border-bottom-color: var(--sedona); }
       <div class="logo-mark">MLB</div>
       <div class="logo-text">
         <h1>The Prop Lab</h1>
-        <p class="subtitle">League-wide Top 3 — across all 30 teams</p>
+        <p class="subtitle">League-wide Top 5 — across all 30 teams</p>
       </div>
     </div>
     <div class="masthead-meta">
@@ -990,16 +993,16 @@ a:hover { border-bottom-color: var(--sedona); }
   <div class="mlb-section">
     <section id="top-picks" class="top-picks" hidden></section>
     <div id="empty-state" class="mlb-meta" style="padding:1rem 0;" hidden>
-      No positive-Kelly edges in any team's cache right now.
+      No positive-Kelly edges in any non-started team's cache right now.
     </div>
   </div>
 
   <div class="mlb-section">
     <h2>Per-team cache freshness</h2>
     <p class="mlb-meta" style="margin:0 0 0.6rem;">
-      Each team's cache is warmed at FP-20 of its own first pitch. Older entries
-      are last night's data — the top-3 above reflects whatever is currently
-      cached. Hit "Refresh all teams" to force a league-wide warm.
+      Each team's cache is warmed at FP-20 of its own first pitch. Teams whose
+      first pitch has already passed are excluded from the top-5 (you can't bet
+      a started game). Hit "Refresh all teams" to force a league-wide warm.
     </p>
     <div id="freshness" class="freshness-grid"></div>
   </div>
@@ -1010,14 +1013,78 @@ a:hover { border-bottom-color: var(--sedona); }
 const BANKROLL_USD = 100.0;
 const KELLY_MULT   = 0.125;
 const IS_STATIC    = true;
-const STATIC_DATA  = {"bankroll_usd": 100.0, "freshness": [{"age_seconds": 1457, "cached_at": 1778633891, "first_pitch_utc": "2026-05-13T00:05:00Z", "has_data": true, "opponent": "Texas Rangers", "team": "Diamondbacks", "team_key": "dbacks"}, {"age_seconds": 7339, "cached_at": 1778628009, "first_pitch_utc": "2026-05-12T23:40:00Z", "has_data": true, "opponent": "Kansas City Royals", "team": "White Sox", "team_key": "whitesox"}, {"age_seconds": 7340, "cached_at": 1778628008, "first_pitch_utc": "2026-05-12T23:40:00Z", "has_data": true, "opponent": "Milwaukee Brewers", "team": "Padres", "team_key": "padres"}, {"age_seconds": 142, "cached_at": 1778635206, "first_pitch_utc": "2026-05-13T01:40:00Z", "has_data": true, "opponent": "Athletics", "team": "Cardinals", "team_key": "cardinals"}, {"age_seconds": 12743, "cached_at": 1778622605, "first_pitch_utc": "2026-05-12T22:10:00Z", "has_data": true, "opponent": "Cleveland Guardians", "team": "Angels", "team_key": "angels"}, {"age_seconds": 11242, "cached_at": 1778624106, "first_pitch_utc": "2026-05-12T22:35:00Z", "has_data": true, "opponent": "New York Yankees", "team": "Orioles", "team_key": "orioles"}, {"age_seconds": 10642, "cached_at": 1778624706, "first_pitch_utc": "2026-05-12T22:45:00Z", "has_data": true, "opponent": "Philadelphia Phillies", "team": "Red Sox", "team_key": "redsox"}, {"age_seconds": 8843, "cached_at": 1778626505, "first_pitch_utc": "2026-05-12T23:15:00Z", "has_data": true, "opponent": "Atlanta Braves", "team": "Cubs", "team_key": "cubs"}, {"age_seconds": 10941, "cached_at": 1778624407, "first_pitch_utc": "2026-05-12T22:40:00Z", "has_data": true, "opponent": "Washington Nationals", "team": "Reds", "team_key": "reds"}, {"age_seconds": 12742, "cached_at": 1778622606, "first_pitch_utc": "2026-05-12T22:10:00Z", "has_data": true, "opponent": "Los Angeles Angels", "team": "Guardians", "team_key": "guardians"}, {"age_seconds": 10941, "cached_at": 1778624407, "first_pitch_utc": "2026-05-12T22:40:00Z", "has_data": true, "opponent": "Pittsburgh Pirates", "team": "Rockies", "team_key": "rockies"}, {"age_seconds": 9143, "cached_at": 1778626205, "first_pitch_utc": "2026-05-12T23:10:00Z", "has_data": true, "opponent": "New York Mets", "team": "Tigers", "team_key": "tigers"}, {"age_seconds": 5543, "cached_at": 1778629805, "first_pitch_utc": "2026-05-13T00:10:00Z", "has_data": true, "opponent": "Seattle Mariners", "team": "Astros", "team_key": "astros"}, {"age_seconds": 7340, "cached_at": 1778628008, "first_pitch_utc": "2026-05-12T23:40:00Z", "has_data": true, "opponent": "Chicago White Sox", "team": "Royals", "team_key": "royals"}, {"age_seconds": 32159, "cached_at": 1778603189, "first_pitch_utc": "2026-05-13T02:10:00Z", "has_data": true, "opponent": "San Francisco Giants", "team": "Dodgers", "team_key": "dodgers"}, {"age_seconds": 10941, "cached_at": 1778624407, "first_pitch_utc": "2026-05-12T22:40:00Z", "has_data": true, "opponent": "Cincinnati Reds", "team": "Nationals", "team_key": "nationals"}, {"age_seconds": 9143, "cached_at": 1778626205, "first_pitch_utc": "2026-05-12T23:10:00Z", "has_data": true, "opponent": "Detroit Tigers", "team": "Mets", "team_key": "mets"}, {"age_seconds": 142, "cached_at": 1778635206, "first_pitch_utc": "2026-05-13T01:40:00Z", "has_data": true, "opponent": "St. Louis Cardinals", "team": "Athletics", "team_key": "athletics"}, {"age_seconds": 10941, "cached_at": 1778624407, "first_pitch_utc": "2026-05-12T22:40:00Z", "has_data": true, "opponent": "Colorado Rockies", "team": "Pirates", "team_key": "pirates"}, {"age_seconds": 5542, "cached_at": 1778629806, "first_pitch_utc": "2026-05-13T00:10:00Z", "has_data": true, "opponent": "Houston Astros", "team": "Mariners", "team_key": "mariners"}, {"age_seconds": 84743, "cached_at": 1778550605, "first_pitch_utc": "2026-05-12T02:10:00Z", "has_data": true, "opponent": "Los Angeles Dodgers", "team": "Giants", "team_key": "giants"}, {"age_seconds": 9322, "cached_at": 1778626026, "first_pitch_utc": "2026-05-12T23:07:00Z", "has_data": true, "opponent": "Toronto Blue Jays", "team": "Rays", "team_key": "rays"}, {"age_seconds": 5843, "cached_at": 1778629505, "first_pitch_utc": "2026-05-13T00:05:00Z", "has_data": true, "opponent": "Arizona Diamondbacks", "team": "Rangers", "team_key": "rangers"}, {"age_seconds": 9322, "cached_at": 1778626026, "first_pitch_utc": "2026-05-12T23:07:00Z", "has_data": true, "opponent": "Tampa Bay Rays", "team": "Blue Jays", "team_key": "bluejays"}, {"age_seconds": 7339, "cached_at": 1778628009, "first_pitch_utc": "2026-05-12T23:40:00Z", "has_data": true, "opponent": "Miami Marlins", "team": "Twins", "team_key": "twins"}, {"age_seconds": 10642, "cached_at": 1778624706, "first_pitch_utc": "2026-05-12T22:45:00Z", "has_data": true, "opponent": "Boston Red Sox", "team": "Phillies", "team_key": "phillies"}, {"age_seconds": 8843, "cached_at": 1778626505, "first_pitch_utc": "2026-05-12T23:15:00Z", "has_data": true, "opponent": "Chicago Cubs", "team": "Braves", "team_key": "braves"}, {"age_seconds": 7340, "cached_at": 1778628008, "first_pitch_utc": "2026-05-12T23:40:00Z", "has_data": true, "opponent": "Minnesota Twins", "team": "Marlins", "team_key": "marlins"}, {"age_seconds": 11242, "cached_at": 1778624106, "first_pitch_utc": "2026-05-12T22:35:00Z", "has_data": true, "opponent": "Baltimore Orioles", "team": "Yankees", "team_key": "yankees"}, {"age_seconds": 7340, "cached_at": 1778628008, "first_pitch_utc": "2026-05-12T23:40:00Z", "has_data": true, "opponent": "San Diego Padres", "team": "Brewers", "team_key": "brewers"}], "generated_at_unix": 1778635348, "parlay": {"american_odds": 610, "decimal_odds": 7.097, "edge": 0.4373, "fair_prob": 0.116, "implied_prob": 0.1409, "kelly_frac": 0.06, "model_prob": 0.5533, "n_legs": 3, "stake": 6.0}, "top_picks": [{"book": "draftkings", "confidence": 0.987, "edge": 0.4866, "fair_prob": 0.4069, "full_name": "Trevor McDonald", "implied_prob": 0.431, "kelly_frac": 0.2032, "line": 4.5, "market": "pitcher_strikeouts", "model_prob": 0.8936, "name": "McDonald", "player_id": 686790, "price": 132, "rank_score": 0.20056, "rank_score_conf2": 0.19795, "side": "Over", "stake": 20.32, "team": "Giants", "team_key": "giants"}, {"book": "williamhill_us", "confidence": 1.0, "edge": 0.3023, "fair_prob": 0.503, "full_name": "Shohei Ohtani", "implied_prob": 0.5392, "kelly_frac": 0.1444, "line": 2.5, "market": "batter_hits_runs_rbis", "model_prob": 0.8053, "name": "Ohtani", "player_id": 660271, "price": -117, "rank_score": 0.1444, "rank_score_conf2": 0.1444, "side": "Under", "stake": 14.44, "team": "Dodgers", "team_key": "dodgers"}, {"book": "williamhill_us", "confidence": 1.0, "edge": 0.2019, "fair_prob": 0.567, "full_name": "Freddie Freeman", "implied_prob": 0.6063, "kelly_frac": 0.1033, "line": 2.5, "market": "batter_hits_runs_rbis", "model_prob": 0.7689, "name": "Freeman", "player_id": 518692, "price": -154, "rank_score": 0.1033, "rank_score_conf2": 0.1033, "side": "Under", "stake": 10.33, "team": "Dodgers", "team_key": "dodgers"}], "total_positive_kelly_plays": 945};
+const STATIC_DATA  = {"bankroll_usd": 100.0, "freshness": [{"age_seconds": 3196, "cached_at": 1778633891, "first_pitch_utc": "2026-05-13T00:05:00+00:00", "has_data": true, "opponent": "Texas Rangers", "started": true, "team": "Diamondbacks", "team_key": "dbacks"}, {"age_seconds": 9078, "cached_at": 1778628009, "first_pitch_utc": "2026-05-12T23:40:00+00:00", "has_data": true, "opponent": "Kansas City Royals", "started": true, "team": "White Sox", "team_key": "whitesox"}, {"age_seconds": 9079, "cached_at": 1778628008, "first_pitch_utc": "2026-05-12T23:40:00+00:00", "has_data": true, "opponent": "Milwaukee Brewers", "started": true, "team": "Padres", "team_key": "padres"}, {"age_seconds": 1881, "cached_at": 1778635206, "first_pitch_utc": "2026-05-13T01:40:00+00:00", "has_data": true, "opponent": "Athletics", "started": true, "team": "Cardinals", "team_key": "cardinals"}, {"age_seconds": 14482, "cached_at": 1778622605, "first_pitch_utc": "2026-05-12T22:10:00+00:00", "has_data": true, "opponent": "Cleveland Guardians", "started": true, "team": "Angels", "team_key": "angels"}, {"age_seconds": 12981, "cached_at": 1778624106, "first_pitch_utc": "2026-05-12T22:35:00+00:00", "has_data": true, "opponent": "New York Yankees", "started": true, "team": "Orioles", "team_key": "orioles"}, {"age_seconds": 12381, "cached_at": 1778624706, "first_pitch_utc": "2026-05-12T22:45:00+00:00", "has_data": true, "opponent": "Philadelphia Phillies", "started": true, "team": "Red Sox", "team_key": "redsox"}, {"age_seconds": 10582, "cached_at": 1778626505, "first_pitch_utc": "2026-05-12T23:15:00+00:00", "has_data": true, "opponent": "Atlanta Braves", "started": true, "team": "Cubs", "team_key": "cubs"}, {"age_seconds": 12680, "cached_at": 1778624407, "first_pitch_utc": "2026-05-12T22:40:00+00:00", "has_data": true, "opponent": "Washington Nationals", "started": true, "team": "Reds", "team_key": "reds"}, {"age_seconds": 14481, "cached_at": 1778622606, "first_pitch_utc": "2026-05-12T22:10:00+00:00", "has_data": true, "opponent": "Los Angeles Angels", "started": true, "team": "Guardians", "team_key": "guardians"}, {"age_seconds": 12680, "cached_at": 1778624407, "first_pitch_utc": "2026-05-12T22:40:00+00:00", "has_data": true, "opponent": "Pittsburgh Pirates", "started": true, "team": "Rockies", "team_key": "rockies"}, {"age_seconds": 10882, "cached_at": 1778626205, "first_pitch_utc": "2026-05-12T23:10:00+00:00", "has_data": true, "opponent": "New York Mets", "started": true, "team": "Tigers", "team_key": "tigers"}, {"age_seconds": 7282, "cached_at": 1778629805, "first_pitch_utc": "2026-05-13T00:10:00+00:00", "has_data": true, "opponent": "Seattle Mariners", "started": true, "team": "Astros", "team_key": "astros"}, {"age_seconds": 9079, "cached_at": 1778628008, "first_pitch_utc": "2026-05-12T23:40:00+00:00", "has_data": true, "opponent": "Chicago White Sox", "started": true, "team": "Royals", "team_key": "royals"}, {"age_seconds": 76, "cached_at": 1778637011, "first_pitch_utc": "2026-05-13T02:10:00+00:00", "has_data": true, "opponent": "San Francisco Giants", "started": false, "team": "Dodgers", "team_key": "dodgers"}, {"age_seconds": 12680, "cached_at": 1778624407, "first_pitch_utc": "2026-05-12T22:40:00+00:00", "has_data": true, "opponent": "Cincinnati Reds", "started": true, "team": "Nationals", "team_key": "nationals"}, {"age_seconds": 10882, "cached_at": 1778626205, "first_pitch_utc": "2026-05-12T23:10:00+00:00", "has_data": true, "opponent": "Detroit Tigers", "started": true, "team": "Mets", "team_key": "mets"}, {"age_seconds": 1881, "cached_at": 1778635206, "first_pitch_utc": "2026-05-13T01:40:00+00:00", "has_data": true, "opponent": "St. Louis Cardinals", "started": true, "team": "Athletics", "team_key": "athletics"}, {"age_seconds": 12680, "cached_at": 1778624407, "first_pitch_utc": "2026-05-12T22:40:00+00:00", "has_data": true, "opponent": "Colorado Rockies", "started": true, "team": "Pirates", "team_key": "pirates"}, {"age_seconds": 7281, "cached_at": 1778629806, "first_pitch_utc": "2026-05-13T00:10:00+00:00", "has_data": true, "opponent": "Houston Astros", "started": true, "team": "Mariners", "team_key": "mariners"}, {"age_seconds": 77, "cached_at": 1778637010, "first_pitch_utc": "2026-05-13T02:10:00+00:00", "has_data": true, "opponent": "Los Angeles Dodgers", "started": false, "team": "Giants", "team_key": "giants"}, {"age_seconds": 11061, "cached_at": 1778626026, "first_pitch_utc": "2026-05-12T23:07:00+00:00", "has_data": true, "opponent": "Toronto Blue Jays", "started": true, "team": "Rays", "team_key": "rays"}, {"age_seconds": 7582, "cached_at": 1778629505, "first_pitch_utc": "2026-05-13T00:05:00+00:00", "has_data": true, "opponent": "Arizona Diamondbacks", "started": true, "team": "Rangers", "team_key": "rangers"}, {"age_seconds": 11061, "cached_at": 1778626026, "first_pitch_utc": "2026-05-12T23:07:00+00:00", "has_data": true, "opponent": "Tampa Bay Rays", "started": true, "team": "Blue Jays", "team_key": "bluejays"}, {"age_seconds": 9078, "cached_at": 1778628009, "first_pitch_utc": "2026-05-12T23:40:00+00:00", "has_data": true, "opponent": "Miami Marlins", "started": true, "team": "Twins", "team_key": "twins"}, {"age_seconds": 12381, "cached_at": 1778624706, "first_pitch_utc": "2026-05-12T22:45:00+00:00", "has_data": true, "opponent": "Boston Red Sox", "started": true, "team": "Phillies", "team_key": "phillies"}, {"age_seconds": 10582, "cached_at": 1778626505, "first_pitch_utc": "2026-05-12T23:15:00+00:00", "has_data": true, "opponent": "Chicago Cubs", "started": true, "team": "Braves", "team_key": "braves"}, {"age_seconds": 9079, "cached_at": 1778628008, "first_pitch_utc": "2026-05-12T23:40:00+00:00", "has_data": true, "opponent": "Minnesota Twins", "started": true, "team": "Marlins", "team_key": "marlins"}, {"age_seconds": 12981, "cached_at": 1778624106, "first_pitch_utc": "2026-05-12T22:35:00+00:00", "has_data": true, "opponent": "Baltimore Orioles", "started": true, "team": "Yankees", "team_key": "yankees"}, {"age_seconds": 9079, "cached_at": 1778628008, "first_pitch_utc": "2026-05-12T23:40:00+00:00", "has_data": true, "opponent": "San Diego Padres", "started": true, "team": "Brewers", "team_key": "brewers"}], "generated_at_unix": 1778637087, "n": 5, "parlay_top2": {"american_odds": 606, "decimal_odds": 7.0636, "edge": 0.3315, "fair_prob": 0.1242, "implied_prob": 0.1416, "kelly_frac": 0.0457, "model_prob": 0.4557, "n_legs": 2, "stake": 4.57}, "parlay_top3": {"american_odds": 1065, "decimal_odds": 11.6504, "edge": 0.2876, "fair_prob": 0.0704, "implied_prob": 0.0858, "kelly_frac": 0.0372, "model_prob": 0.358, "n_legs": 3, "stake": 3.72}, "top_picks": [{"book": "betmgm", "confidence": 1.0, "edge": 0.2993, "fair_prob": 0.4918, "first_pitch_utc": "2026-05-13T02:10:00+00:00", "full_name": "Shohei Ohtani", "implied_prob": 0.5238, "kelly_frac": 0.0702, "line": 2.5, "market": "batter_hits_runs_rbis", "model_prob": 0.7911, "name": "Ohtani", "player_id": 660271, "price": -110, "rank_score": 0.0702, "rank_score_conf2": 0.0702, "side": "Under", "stake": 7.02, "team": "Dodgers", "team_key": "dodgers"}, {"book": "betmgm", "confidence": 0.998, "edge": 0.3235, "fair_prob": 0.2525, "first_pitch_utc": "2026-05-13T02:10:00+00:00", "full_name": "Luis Arraez", "implied_prob": 0.2703, "kelly_frac": 0.0524, "line": 0.5, "market": "batter_strikeouts", "model_prob": 0.576, "name": "Arraez", "player_id": 650333, "price": 270, "rank_score": 0.0523, "rank_score_conf2": 0.05219, "side": "Over", "stake": 5.24, "team": "Giants", "team_key": "giants"}, {"book": "fanduel", "confidence": 0.873, "edge": 0.2187, "fair_prob": 0.567, "first_pitch_utc": "2026-05-13T02:10:00+00:00", "full_name": "Adrian Houser", "implied_prob": 0.6063, "kelly_frac": 0.057, "line": 3.5, "market": "pitcher_strikeouts", "model_prob": 0.7857, "name": "Houser", "player_id": 605288, "price": -154, "rank_score": 0.04976, "rank_score_conf2": 0.04344, "side": "Under", "stake": 5.7, "team": "Dodgers", "team_key": "dodgers"}, {"book": "betmgm", "confidence": 0.998, "edge": 0.1925, "fair_prob": 0.5541, "first_pitch_utc": "2026-05-13T02:10:00+00:00", "full_name": "Freddie Freeman", "implied_prob": 0.5918, "kelly_frac": 0.0474, "line": 2.5, "market": "batter_hits_runs_rbis", "model_prob": 0.7466, "name": "Freeman", "player_id": 518692, "price": -145, "rank_score": 0.04731, "rank_score_conf2": 0.04721, "side": "Under", "stake": 4.74, "team": "Dodgers", "team_key": "dodgers"}, {"book": "draftkings", "confidence": 0.853, "edge": 0.2261, "fair_prob": 0.5062, "first_pitch_utc": "2026-05-13T02:10:00+00:00", "full_name": "Yoshinobu Yamamoto", "implied_prob": 0.537, "kelly_frac": 0.0527, "line": 6.5, "market": "pitcher_strikeouts", "model_prob": 0.7323, "name": "Yamamoto", "player_id": 808967, "price": -116, "rank_score": 0.04495, "rank_score_conf2": 0.03834, "side": "Under", "stake": 5.27, "team": "Dodgers", "team_key": "dodgers"}], "total_positive_kelly_plays": 65};
+
+// MLB team primary colors (or alternate when primary is too light for white text).
+const TEAM_COLORS = {
+  dbacks:    '#A71930',  // Sedona red
+  whitesox:  '#27251F',  // black
+  padres:    '#2F241D',  // brown
+  cardinals: '#C41E3A',
+  angels:    '#BA0021',
+  orioles:   '#DF4601',
+  redsox:    '#BD3039',
+  cubs:      '#0E3386',
+  reds:      '#C6011F',
+  guardians: '#00385D',
+  rockies:   '#33006F',
+  tigers:    '#0C2340',
+  astros:    '#002D62',
+  royals:    '#004687',
+  dodgers:   '#005A9C',
+  nationals: '#AB0003',
+  mets:      '#002D72',
+  athletics: '#003831',
+  pirates:   '#27251F',  // black (gold too light for white text)
+  mariners:  '#0C2C56',
+  giants:    '#FD5A1E',
+  rays:      '#092C5C',
+  rangers:   '#003278',
+  bluejays:  '#134A8E',
+  twins:     '#002B5C',
+  phillies:  '#E81828',
+  braves:    '#CE1141',
+  marlins:   '#00A3E0',
+  yankees:   '#003087',
+  brewers:   '#12284B',  // navy (gold too light)
+};
 
 function fmtAmerican(p) { if (p == null) return '—'; return p > 0 ? '+' + p : String(p); }
 function fmtEdge(e)     { if (e == null) return '—'; const pct = (e * 100).toFixed(1); return (e >= 0 ? '+' : '') + pct + '%'; }
 function bookLabel(b)   { return b === 'draftkings' ? 'DK' : b === 'fanduel' ? 'FD' : b === 'betmgm' ? 'MGM' : b === 'williamhill_us' ? 'CZR' : (b || '').slice(0,2).toUpperCase(); }
 function marketLabel(m) {
-  if (!m) return '';
-  return m.replace(/^batter_/, '').replace(/^pitcher_/, '').replace(/_/g, ' ');
+  return ({
+    batter_hits: 'Hits',
+    batter_total_bases: 'Total Bases',
+    batter_home_runs: 'Home Run',
+    batter_strikeouts: 'Strikeouts',
+    batter_runs_scored: 'Runs Scored',
+    batter_walks: 'Walks',
+    batter_hits_runs_rbis: 'H+R+RBI',
+    pitcher_strikeouts: 'Pitcher Ks',
+  })[m] || (m || '').replace(/^batter_/, '').replace(/^pitcher_/, '').replace(/_/g, ' ');
+}
+function marketShort(m) {
+  return ({
+    batter_hits: 'H',
+    batter_total_bases: 'TB',
+    batter_home_runs: 'HR',
+    batter_strikeouts: 'K',
+    batter_runs_scored: 'R',
+    batter_walks: 'BB',
+    batter_hits_runs_rbis: 'HRR',
+    pitcher_strikeouts: 'PK',
+  })[m] || m;
+}
+function legChipLabel(leg) {
+  const last = (leg.name || (leg.full_name || '').split(' ').slice(-1)[0] || '?');
+  const mkt = marketShort(leg.market);
+  const line = leg.line == null ? '' : leg.line;
+  const side = (leg.side || '?')[0];
+  return `${last} ${mkt}${line}${side}`;
+}
+function legId(leg) {
+  return `${leg.player_id ?? leg.full_name ?? leg.name}|${leg.market}|${leg.side}|${leg.line}`;
 }
 function fmtAge(secs) {
   if (secs == null) return '—';
@@ -1032,25 +1099,304 @@ function fmtTime(unix) {
   return d.toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
 }
 
-function renderTopPicks(picks, parlay) {
+// Parlay math (mirrors core/parlay.py, lifted from templates/baseball/index.html).
+function americanToDecimal(p) {
+  const o = Number(p);
+  if (!Number.isFinite(o) || o === 0) return null;
+  return o > 0 ? 1 + o / 100 : 1 + 100 / -o;
+}
+function decimalToAmerican(d) {
+  if (d == null || d <= 1) return null;
+  return d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1));
+}
+function kellyFractionFromDecimal(modelProb, decimal) {
+  if (!Number.isFinite(decimal) || decimal <= 1) return 0;
+  const b = decimal - 1;
+  const q = 1 - modelProb;
+  const full = (b * modelProb - q) / b;
+  return full > 0 ? full * KELLY_MULT : 0;
+}
+function computeParlaySummary(legs, bankroll) {
+  if (!legs || legs.length < 2) return null;
+  let dec = 1, mp = 1, fp = 1;
+  for (const leg of legs) {
+    if (leg.price == null || leg.model_prob == null || leg.fair_prob == null) return null;
+    if (leg.model_prob <= 0 || leg.fair_prob <= 0) return null;
+    const d = americanToDecimal(leg.price);
+    if (d == null) return null;
+    dec *= d; mp *= leg.model_prob; fp *= leg.fair_prob;
+  }
+  const american = decimalToAmerican(dec);
+  const kelly = american != null ? kellyFractionFromDecimal(mp, dec) : 0;
+  return {
+    n_legs: legs.length,
+    decimal_odds: dec,
+    american_odds: american,
+    model_prob: mp,
+    fair_prob: fp,
+    implied_prob: 1 / dec,
+    edge: mp - fp,
+    kelly_frac: kelly,
+    stake: kelly * bankroll,
+  };
+}
+function parlayAtPrice(modelProb, americanPrice, bankroll) {
+  const o = Number(americanPrice);
+  if (!Number.isFinite(o) || o === 0) return null;
+  const decimal = o > 0 ? 1 + o / 100 : 1 + 100 / -o;
+  const implied = 1 / decimal;
+  const edge = modelProb - implied;
+  const b = decimal - 1;
+  const q = 1 - modelProb;
+  const fullKelly = (b * modelProb - q) / b;
+  const kelly = fullKelly > 0 ? fullKelly * KELLY_MULT : 0;
+  return { decimal_odds: decimal, implied_prob: implied, edge, kelly_frac: kelly, stake: kelly * bankroll };
+}
+function singlesSummary(legs) {
+  if (!legs || !legs.length) return null;
+  let totalStake = 0, totalEv = 0;
+  for (const leg of legs) {
+    const price = leg.price, mp = leg.model_prob, stake = leg.stake || 0;
+    if (price == null || mp == null) return null;
+    const decimal = price > 0 ? 1 + price / 100 : 1 + 100 / -price;
+    totalStake += stake;
+    totalEv += stake * (mp * decimal - 1);
+  }
+  return { total_stake: totalStake, total_ev: totalEv };
+}
+function parlayVsSingles(legs, parlayModelProb, indepDecimal, bookPrice, bankroll) {
+  const singles = singlesSummary(legs);
+  const atBook = parlayAtPrice(parlayModelProb, bookPrice, bankroll);
+  if (!singles || !atBook) return null;
+  const parlayEv = atBook.stake * (parlayModelProb * atBook.decimal_odds - 1);
+  const priceRatio = indepDecimal > 0 ? atBook.decimal_odds / indepDecimal : 0;
+  const singlesEv = singles.total_ev;
+  const funTaxPct = singlesEv > 0 ? ((singlesEv - parlayEv) / singlesEv * 100) : 0;
+  let grade, headline, reason;
+  if (atBook.edge <= 0) {
+    grade = 'DONATION';
+    headline = 'SINGLES_ARE_THE_PLAY';
+    reason = `Parlay is −EV at ${fmtAmerican(Number(bookPrice))} — model joint ${(parlayModelProb*100).toFixed(1)}% vs book implied ${(atBook.implied_prob*100).toFixed(1)}%. Pure donation.`;
+  } else if (singlesEv <= 0 || parlayEv > singlesEv) {
+    grade = 'BOOSTED';
+    headline = 'TAKE_THE_PARLAY';
+    reason = `Parlay EV $${parlayEv.toFixed(2)} exceeds singles EV $${singlesEv.toFixed(2)} — book is paying enough to overcome the parlay tax.`;
+  } else if (funTaxPct < 15) {
+    grade = 'GOOD'; headline = 'SINGLES_ARE_THE_PLAY';
+    reason = `Small fun tax — only ${funTaxPct.toFixed(0)}% of singles EV foregone. Barely costs anything to play for the sweat.`;
+  } else if (funTaxPct < 50) {
+    grade = 'ACCEPTABLE'; headline = 'SINGLES_ARE_THE_PLAY';
+    reason = `Modest fun tax — ${funTaxPct.toFixed(0)}% of singles EV foregone. Reasonable cost for the sweat.`;
+  } else {
+    grade = 'POOR'; headline = 'SINGLES_ARE_THE_PLAY';
+    reason = `Heavy fun tax — ${funTaxPct.toFixed(0)}% of singles EV foregone. Most of your edge goes to the book.`;
+  }
+  return {
+    headline, grade, reason, fun_tax_pct: funTaxPct,
+    singles_stake: singles.total_stake, singles_ev: singlesEv,
+    parlay_stake: atBook.stake, parlay_ev: parlayEv,
+    price_ratio: priceRatio,
+  };
+}
+
+function buildParlayPanel(parlay, selectablePool) {
+  if (!parlay || !parlay.summary) return '';
+  const s = parlay.summary;
+  const sign = s.edge >= 0 ? '+' : '';
+  let pickerHtml = '';
+  if (selectablePool && selectablePool.length > s.n_legs) {
+    const initialIds = new Set((parlay.legs || []).map(legId));
+    const chips = selectablePool.map((lg, i) => {
+      const on = initialIds.has(legId(lg));
+      return `<label class="tp-leg-chip${on ? ' is-on' : ''}">
+        <input type="checkbox" data-leg-idx="${i}" ${on ? 'checked' : ''} />
+        <span class="tp-leg-chip-num">${i + 1}</span>
+        <span class="tp-leg-chip-text">${legChipLabel(lg)}</span>
+      </label>`;
+    }).join('');
+    pickerHtml = `
+      <div class="tp-parlay tp-parlay-legpicker">
+        <span class="tp-parlay-label">choose ${s.n_legs} of ${selectablePool.length}</span>
+        <span class="tp-leg-chips">${chips}</span>
+      </div>`;
+  }
+  return `
+    <div class="tp-parlay-panel">
+      ${pickerHtml}
+      <div class="tp-parlay tp-parlay-summary">
+        <span class="tp-parlay-label tp-parlay-nlegs">${s.n_legs}-leg parlay</span>
+        <span class="tp-parlay-price">${fmtAmerican(s.american_odds)}</span>
+        <span class="tp-parlay-meta">indep. · model ${(s.model_prob*100).toFixed(1)}% · fair ${(s.fair_prob*100).toFixed(1)}%</span>
+        <span class="tp-parlay-edge">${sign}${(s.edge*100).toFixed(1)}% edge</span>
+        <span class="tp-parlay-stake">$${s.stake.toFixed(2)}</span>
+      </div>
+      <div class="tp-parlay tp-parlay-override">
+        <span class="tp-parlay-label">at your book</span>
+        <span class="tp-parlay-input-wrap">
+          <input type="text" inputmode="numeric" class="tp-parlay-input" placeholder="+170" />
+        </span>
+        <span class="tp-parlay-meta tp-parlay-out-meta">enter your book's parlay price (American)</span>
+        <span class="tp-parlay-edge tp-parlay-out-edge">—</span>
+        <span class="tp-parlay-stake tp-parlay-out-stake">—</span>
+      </div>
+      <div class="tp-parlay-verdict" hidden>
+        <div class="tpv-headline"></div>
+        <div class="tpv-grade"></div>
+        <div class="tpv-reason"></div>
+        <div class="tpv-compare"></div>
+      </div>
+    </div>`;
+}
+
+function wireParlayPanel(panelEl, parlay, selectablePool) {
+  const override = panelEl.querySelector('.tp-parlay-override');
+  if (!override) return;
+  const input = override.querySelector('.tp-parlay-input');
+  const meta  = override.querySelector('.tp-parlay-out-meta');
+  const edgeEl = override.querySelector('.tp-parlay-out-edge');
+  const stakeEl = override.querySelector('.tp-parlay-out-stake');
+  const verdictBox = panelEl.querySelector('.tp-parlay-verdict');
+  const verdictHeadline = verdictBox?.querySelector('.tpv-headline');
+  const verdictGrade    = verdictBox?.querySelector('.tpv-grade');
+  const verdictReason   = verdictBox?.querySelector('.tpv-reason');
+  const verdictCompare  = verdictBox?.querySelector('.tpv-compare');
+  const summaryRow = panelEl.querySelector('.tp-parlay-summary');
+  const sumNlegs = summaryRow.querySelector('.tp-parlay-nlegs');
+  const sumPrice = summaryRow.querySelector('.tp-parlay-price');
+  const sumMeta  = summaryRow.querySelector('.tp-parlay-meta');
+  const sumEdge  = summaryRow.querySelector('.tp-parlay-edge');
+  const sumStake = summaryRow.querySelector('.tp-parlay-stake');
+  const HEADLINE_MAP = {
+    SINGLES_ARE_THE_PLAY: 'SINGLES ARE THE PLAY',
+    TAKE_THE_PARLAY:      'TAKE THE PARLAY',
+  };
+  const GRADE_CLS = {
+    GOOD: 'tpv-grade-good', ACCEPTABLE: 'tpv-grade-acceptable',
+    POOR: 'tpv-grade-poor', DONATION: 'tpv-grade-donation', BOOSTED: 'tpv-grade-boosted',
+  };
+
+  let currentLegs = (parlay && parlay.legs) || [];
+  let currentSummary = (parlay && parlay.summary) || null;
+
+  const refreshSummary = () => {
+    if (!currentSummary) return;
+    const s = currentSummary;
+    const sign = s.edge >= 0 ? '+' : '';
+    sumNlegs.textContent = `${s.n_legs}-leg parlay`;
+    sumPrice.textContent = fmtAmerican(s.american_odds);
+    sumMeta.textContent  = `indep. · model ${(s.model_prob*100).toFixed(1)}% · fair ${(s.fair_prob*100).toFixed(1)}%`;
+    sumEdge.textContent  = `${sign}${(s.edge*100).toFixed(1)}% edge`;
+    sumStake.textContent = `$${s.stake.toFixed(2)}`;
+  };
+
+  const hideVerdict = () => { if (verdictBox) verdictBox.hidden = true; };
+  const recompute = () => {
+    if (!currentSummary) { hideVerdict(); return; }
+    const modelProb = currentSummary.model_prob;
+    const indepDecimal = currentSummary.decimal_odds;
+    const raw = input.value.trim().replace(/^\+/, '');
+    if (!raw) {
+      meta.textContent = "enter your book's parlay price (American)";
+      edgeEl.textContent = '—'; stakeEl.textContent = '—';
+      hideVerdict();
+      return;
+    }
+    const r = parlayAtPrice(modelProb, raw, BANKROLL_USD);
+    if (!r) {
+      meta.textContent = 'invalid price';
+      edgeEl.textContent = '—'; stakeEl.textContent = '—';
+      hideVerdict();
+      return;
+    }
+    const sign = r.edge >= 0 ? '+' : '';
+    meta.textContent = `model ${(modelProb*100).toFixed(1)}% · book ${(r.implied_prob*100).toFixed(1)}%`;
+    edgeEl.textContent = `${sign}${(r.edge*100).toFixed(1)}% edge`;
+    edgeEl.style.color = r.edge > 0 ? '' : '#9a3412';
+    stakeEl.textContent = r.stake > 0 ? `$${r.stake.toFixed(2)}` : '$0.00';
+
+    const v = parlayVsSingles(currentLegs, modelProb, indepDecimal, raw, BANKROLL_USD);
+    if (v && verdictBox) {
+      verdictBox.hidden = false;
+      verdictHeadline.className = 'tpv-headline ' + (v.headline === 'TAKE_THE_PARLAY' ? 'tpv-headline-parlay' : '');
+      verdictHeadline.textContent = HEADLINE_MAP[v.headline] || v.headline;
+      verdictGrade.className = 'tpv-grade ' + (GRADE_CLS[v.grade] || '');
+      verdictGrade.textContent = `Parlay grade: ${v.grade}`;
+      verdictReason.textContent = v.reason;
+      const ratioPct   = (v.price_ratio * 100).toFixed(0);
+      const singlesRoi = v.singles_stake > 0 ? (v.singles_ev / v.singles_stake * 100).toFixed(1) : '0.0';
+      const parlayRoi  = v.parlay_stake  > 0 ? (v.parlay_ev  / v.parlay_stake  * 100).toFixed(1) : '0.0';
+      verdictCompare.textContent =
+        `Singles: $${v.singles_stake.toFixed(2)} stake → $${v.singles_ev.toFixed(2)} EV (${singlesRoi}% ROI) · ` +
+        `Parlay: $${v.parlay_stake.toFixed(2)} stake → $${v.parlay_ev.toFixed(2)} EV (${parlayRoi}% ROI) · ` +
+        `Book pays ${ratioPct}% of indep`;
+    } else {
+      hideVerdict();
+    }
+  };
+
+  const picker = panelEl.querySelector('.tp-parlay-legpicker');
+  if (picker && selectablePool && currentSummary) {
+    const TARGET = currentSummary.n_legs;
+    const chips = Array.from(picker.querySelectorAll('.tp-leg-chip'));
+    const cbFor = (idx) => picker.querySelector(`.tp-leg-chip input[data-leg-idx="${idx}"]`);
+    const initialIds = new Set((parlay.legs || []).map(legId));
+    let order = [];
+    selectablePool.forEach((lg, i) => { if (initialIds.has(legId(lg))) order.push(i); });
+    chips.forEach(label => {
+      const cb = label.querySelector('input[type="checkbox"]');
+      cb.addEventListener('change', () => {
+        const idx = Number(cb.dataset.legIdx);
+        if (cb.checked) {
+          order.push(idx);
+          label.classList.add('is-on');
+          if (order.length > TARGET) {
+            const evict = order.shift();
+            const evCb = cbFor(evict);
+            if (evCb && evCb !== cb) {
+              evCb.checked = false;
+              evCb.parentElement.classList.remove('is-on');
+            }
+          }
+        } else {
+          if (order.length <= TARGET) {
+            cb.checked = true; return;
+          }
+          order = order.filter(x => x !== idx);
+          label.classList.remove('is-on');
+        }
+        const selectedIdx = chips
+          .map(l => Number(l.querySelector('input').dataset.legIdx))
+          .filter(i => cbFor(i).checked);
+        currentLegs = selectedIdx.map(i => selectablePool[i]);
+        currentSummary = computeParlaySummary(currentLegs, BANKROLL_USD);
+        refreshSummary();
+        recompute();
+      });
+    });
+  }
+
+  refreshSummary();
+  input.addEventListener('input', recompute);
+}
+
+function renderTopPicks(picks, parlay3, parlay2) {
   const box = document.getElementById('top-picks');
   const empty = document.getElementById('empty-state');
   if (!picks || !picks.length) {
-    box.hidden = true;
-    empty.hidden = false;
-    return;
+    box.hidden = true; empty.hidden = false; return;
   }
-  box.hidden = false;
-  empty.hidden = true;
+  box.hidden = false; empty.hidden = true;
   const totalStake = picks.reduce((s, r) => s + (r.kelly_frac || 0) * BANKROLL_USD * KELLY_MULT, 0);
+
   const rows = picks.map((r, i) => {
     const stakeUsd = (r.kelly_frac || 0) * BANKROLL_USD * KELLY_MULT;
     const conf = Math.round((r.confidence || 0) * 100);
     const confTone = r.confidence == null ? '' : r.confidence >= 0.85 ? 'conf-strong' : r.confidence >= 0.65 ? 'conf-mid' : 'conf-weak';
+    const teamColor = TEAM_COLORS[r.team_key] || '#555';
     return `
       <div class="tp-row">
         <span class="tp-num">${i + 1}</span>
-        <span class="tp-player"><span class="mlb-team-pill">${r.team || ''}</span>${r.full_name || r.name}</span>
+        <span class="tp-player"><span class="mlb-team-pill" style="background:${teamColor}">${r.team || ''}</span>${r.full_name || r.name}</span>
         <span class="tp-bet">${marketLabel(r.market)} ${r.line != null ? r.line : ''} ${r.side || ''}</span>
         <span class="tp-book"><span class="book-pill book-${r.book}">${bookLabel(r.book)}</span></span>
         <span class="tp-price">${fmtAmerican(r.price)}</span>
@@ -1060,19 +1406,11 @@ function renderTopPicks(picks, parlay) {
       </div>`;
   }).join('');
 
-  let parlayHtml = '';
-  if (parlay) {
-    parlayHtml = `
-      <div class="tp-parlay">
-        <div class="tp-parlay-label">${picks.length}-leg parlay</div>
-        <div>
-          <span class="tp-parlay-meta">model joint ${(parlay.model_prob * 100).toFixed(1)}%</span>
-          <span class="tp-parlay-price">@ ${fmtAmerican(parlay.american_odds)}</span>
-          <span class="tp-parlay-edge">${fmtEdge(parlay.edge)}</span>
-          <span class="tp-parlay-stake">stake $${(parlay.stake || 0).toFixed(2)}</span>
-        </div>
-      </div>`;
-  }
+  // Build 3-leg and 2-leg parlay panels with chip selectors using all picks as pool.
+  const pool = picks;
+  const parlay3Obj = parlay3 ? { legs: picks.slice(0, 3), summary: parlay3 } : null;
+  const parlay2Obj = parlay2 ? { legs: picks.slice(0, 2), summary: parlay2 } : null;
+  const parlayHtml = buildParlayPanel(parlay3Obj, pool) + buildParlayPanel(parlay2Obj, pool);
 
   box.innerHTML = `
     <div class="tp-head">
@@ -1082,31 +1420,47 @@ function renderTopPicks(picks, parlay) {
     <div class="tp-grid">${rows}</div>
     ${parlayHtml}
   `;
+
+  const wired = [
+    { parlay: parlay3Obj, pool },
+    { parlay: parlay2Obj, pool },
+  ].filter(x => x.parlay && x.parlay.summary);
+  box.querySelectorAll('.tp-parlay-panel').forEach((panelEl, i) => {
+    wireParlayPanel(panelEl, wired[i].parlay, wired[i].pool);
+  });
 }
 
 function renderFreshness(rows) {
   const grid = document.getElementById('freshness');
   if (!rows || !rows.length) { grid.innerHTML = ''; return; }
   grid.innerHTML = rows.map(r => {
-    const cls = !r.has_data ? 'missing' : (r.age_seconds != null && r.age_seconds < 6 * 3600 ? 'fresh' : 'stale');
+    let cls;
+    if (!r.has_data)      cls = 'missing';
+    else if (r.started)   cls = 'started';
+    else if (r.age_seconds != null && r.age_seconds < 6 * 3600) cls = 'fresh';
+    else                  cls = 'stale';
     const ageLine = r.has_data ? fmtAge(r.age_seconds) : 'no cache';
+    const statusLine = r.started ? '<div class="ft-status">game started</div>' : '';
     const oppLine = r.opponent ? ` vs ${r.opponent}` : '';
     return `
       <div class="freshness-cell ${cls}">
         <div class="ft-team">${r.team}${oppLine}</div>
         <div class="ft-age">${ageLine}</div>
+        ${statusLine}
       </div>`;
   }).join('');
 }
 
 function applyData(data) {
   document.getElementById('generated-at').textContent = fmtTime(data.generated_at_unix);
-  renderTopPicks(data.top_picks, data.parlay);
+  renderTopPicks(data.top_picks, data.parlay_top3, data.parlay_top2);
   renderFreshness(data.freshness);
   if (!IS_STATIC) {
     const status = document.getElementById('status');
     const n = data.total_positive_kelly_plays || 0;
-    status.textContent = `${n} positive-Kelly plays found across ${(data.freshness || []).filter(f => f.has_data).length} cached teams.`;
+    const cachedTeams = (data.freshness || []).filter(f => f.has_data).length;
+    const startedTeams = (data.freshness || []).filter(f => f.started).length;
+    status.textContent = `${n} positive-Kelly plays across ${cachedTeams} cached teams (${startedTeams} excluded as already-started).`;
   }
 }
 
