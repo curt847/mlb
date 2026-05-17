@@ -993,6 +993,37 @@ a:hover { border-bottom-color: var(--sedona); }
   .team-jump-list .mlb-team-pill {
     margin-right: 0; min-width: 32px; text-align: center;
   }
+  /* Mark-placed flow on the league-wide top picks */
+  .tp-claim-cell { text-align: right; }
+  .tp-claim {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    padding: 4px 6px; border: 1px solid #ccc; background: #fff;
+    border-radius: 4px; cursor: pointer; white-space: nowrap;
+  }
+  .tp-claim:hover { background: #f6f6f4; }
+  .tp-claim:disabled { opacity: 0.4; cursor: not-allowed; }
+  .tp-claim.placed {
+    background: #15803d; color: #fff; border-color: #15803d;
+  }
+  .tp-claim.placed:hover { background: #166534; }
+  .tp-claim.claim-error {
+    background: #fee2e2; border-color: #b91c1c; color: #b91c1c;
+  }
+  .tp-stake-input {
+    width: 56px; text-align: right; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; padding: 2px 4px; border: 1px solid #aaa; border-radius: 3px;
+  }
+  .tp-stake-input.actual-saved { background: #dcfce7; transition: background 0.4s; }
+  .tp-stake-input.actual-error { background: #fee2e2; }
+  .tp-row.placed-row { background: rgba(21,128,61,0.06); }
+  @media (max-width: 720px) {
+    /* On narrow screens the row drops to a 2-row 5-col layout — slot the
+       claim button onto row 2 alongside the bet description and shrink
+       tp-bet's span to make room. */
+    .tp-row .tp-bet { grid-column: 2 / 5 !important; }
+    .tp-claim-cell { grid-column: 5 / 6; grid-row: 2; text-align: right; }
+    .tp-claim { font-size: 9px; padding: 2px 4px; }
+  }
 </style>
 </head>
 <body>
@@ -1109,7 +1140,7 @@ a:hover { border-bottom-color: var(--sedona); }
 const BANKROLL_USD = 100.0;
 const KELLY_MULT   = 0.125;
 const IS_STATIC    = true;
-const STATIC_DATA  = {"aggregator_ran_at_unix": 1778978402, "bankroll_usd": 100.0, "freshness": [{"age_seconds": 15032, "cached_at": 1778963370, "first_pitch_utc": "2026-05-16T19:10:00+00:00", "has_data": true, "opponent": "Colorado Rockies", "started": true, "team": "Diamondbacks", "team_key": "dbacks"}, {"age_seconds": 7196, "cached_at": 1778971206, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Chicago Cubs", "started": true, "team": "White Sox", "team_key": "whitesox"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Padres", "team_key": "padres"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Cardinals", "team_key": "cardinals"}, {"age_seconds": 9297, "cached_at": 1778969105, "first_pitch_utc": "2026-05-17T01:38:00+00:00", "has_data": true, "opponent": "Los Angeles Dodgers", "started": false, "team": "Angels", "team_key": "angels"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Orioles", "team_key": "orioles"}, {"age_seconds": 14699, "cached_at": 1778963703, "first_pitch_utc": "2026-05-16T23:15:00+00:00", "has_data": true, "opponent": "Atlanta Braves", "started": true, "team": "Red Sox", "team_key": "redsox"}, {"age_seconds": 15017, "cached_at": 1778963385, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Chicago White Sox", "started": true, "team": "Cubs", "team_key": "cubs"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Reds", "team_key": "reds"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Guardians", "team_key": "guardians"}, {"age_seconds": 15031, "cached_at": 1778963371, "first_pitch_utc": "2026-05-16T19:10:00+00:00", "has_data": true, "opponent": "Arizona Diamondbacks", "started": true, "team": "Rockies", "team_key": "rockies"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Tigers", "team_key": "tigers"}, {"age_seconds": 14998, "cached_at": 1778963404, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Texas Rangers", "started": true, "team": "Astros", "team_key": "astros"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Royals", "team_key": "royals"}, {"age_seconds": 9295, "cached_at": 1778969107, "first_pitch_utc": "2026-05-17T01:38:00+00:00", "has_data": true, "opponent": "Los Angeles Angels", "started": false, "team": "Dodgers", "team_key": "dodgers"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Nationals", "team_key": "nationals"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Mets", "team_key": "mets"}, {"age_seconds": 8097, "cached_at": 1778970305, "first_pitch_utc": "2026-05-17T01:40:00+00:00", "has_data": true, "opponent": "San Francisco Giants", "started": false, "team": "Athletics", "team_key": "athletics"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Pirates", "team_key": "pirates"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Mariners", "team_key": "mariners"}, {"age_seconds": 8095, "cached_at": 1778970307, "first_pitch_utc": "2026-05-17T01:40:00+00:00", "has_data": true, "opponent": "Athletics", "started": false, "team": "Giants", "team_key": "giants"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Rays", "team_key": "rays"}, {"age_seconds": 14996, "cached_at": 1778963406, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Houston Astros", "started": true, "team": "Rangers", "team_key": "rangers"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Blue Jays", "team_key": "bluejays"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Twins", "team_key": "twins"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Phillies", "team_key": "phillies"}, {"age_seconds": 14697, "cached_at": 1778963705, "first_pitch_utc": "2026-05-16T23:15:00+00:00", "has_data": true, "opponent": "Boston Red Sox", "started": true, "team": "Braves", "team_key": "braves"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Marlins", "team_key": "marlins"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Yankees", "team_key": "yankees"}, {"age_seconds": null, "cached_at": null, "has_data": false, "started": false, "team": "Brewers", "team_key": "brewers"}], "generated_at_unix": 1778971206, "market_arrows": {"batter_doubles": {"significance": "\u2193", "stability": "\u2193"}, "batter_hits": {"significance": "\u2192", "stability": "\u2192"}, "batter_hits_runs_rbis": {"significance": "\u2192", "stability": "\u2191"}, "batter_rbis": {"significance": "\u2192", "stability": "\u2193"}, "batter_runs_scored": {"significance": "\u2192", "stability": "\u2192"}, "batter_strikeouts": {"significance": "\u2193", "stability": "\u2193"}, "batter_total_bases": {"significance": "\u2193", "stability": "\u2193"}, "batter_walks": {"significance": "\u2193", "stability": "\u2193"}, "pitcher_outs": {"significance": "\u2192", "stability": "\u2191"}, "pitcher_strikeouts": {"significance": "\u2193", "stability": "\u2193"}}, "n": 5, "parlay_top2": {"american_odds": 359, "decimal_odds": 4.592, "edge": 0.2938, "fair_prob": 0.1905, "implied_prob": 0.2178, "kelly_frac": 0.0426, "model_prob": 0.4843, "n_legs": 2, "stake": 4.26}, "parlay_top3": null, "top_picks": [{"book": "draftkings", "confidence": 1.0, "edge": 0.3325, "fair_prob": 0.4176, "first_pitch_utc": "2026-05-17T01:38:00+00:00", "full_name": "Justin Wrobleski", "implied_prob": 0.4464, "kelly_frac": 0.0686, "line": 18.5, "market": "pitcher_outs", "model_prob": 0.7501, "name": "Wrobleski", "player_id": 680736, "price": 124, "rank_score": 0.0686, "side": "Over", "stake": 6.859999999999999, "team": "Dodgers", "team_key": "dodgers"}, {"book": "draftkings", "confidence": 0.947, "edge": 0.1895, "fair_prob": 0.4562, "first_pitch_utc": "2026-05-17T01:40:00+00:00", "full_name": "Luis Severino", "implied_prob": 0.4878, "kelly_frac": 0.0385, "line": 5.5, "market": "pitcher_hits_allowed", "model_prob": 0.6456, "name": "Severino", "player_id": 622663, "price": 105, "rank_score": 0.03646, "side": "Under", "stake": 3.85, "team": "Athletics", "team_key": "athletics"}], "total_positive_kelly_plays": 5};
+const STATIC_DATA  = {"aggregator_ran_at_unix": 1779026715, "bankroll_usd": 100.0, "freshness": [{"age_seconds": 33244, "cached_at": 1778993471, "first_pitch_utc": "2026-05-16T19:10:00+00:00", "has_data": true, "opponent": "Colorado Rockies", "started": true, "team": "Diamondbacks", "team_key": "dbacks"}, {"age_seconds": 55509, "cached_at": 1778971206, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Chicago Cubs", "started": true, "team": "White Sox", "team_key": "whitesox"}, {"age_seconds": 33271, "cached_at": 1778993444, "first_pitch_utc": "2026-05-16T23:15:00+00:00", "has_data": true, "opponent": "Seattle Mariners", "started": true, "team": "Padres", "team_key": "padres"}, {"age_seconds": 33235, "cached_at": 1778993480, "first_pitch_utc": "2026-05-16T18:15:00+00:00", "has_data": true, "opponent": "Kansas City Royals", "started": true, "team": "Cardinals", "team_key": "cardinals"}, {"age_seconds": 57610, "cached_at": 1778969105, "first_pitch_utc": "2026-05-17T01:38:00+00:00", "has_data": true, "opponent": "Los Angeles Dodgers", "started": true, "team": "Angels", "team_key": "angels"}, {"age_seconds": 33234, "cached_at": 1778993481, "first_pitch_utc": "2026-05-16T20:05:00+00:00", "has_data": true, "opponent": "Washington Nationals", "started": true, "team": "Orioles", "team_key": "orioles"}, {"age_seconds": 63012, "cached_at": 1778963703, "first_pitch_utc": "2026-05-16T23:15:00+00:00", "has_data": true, "opponent": "Atlanta Braves", "started": true, "team": "Red Sox", "team_key": "redsox"}, {"age_seconds": 63330, "cached_at": 1778963385, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Chicago White Sox", "started": true, "team": "Cubs", "team_key": "cubs"}, {"age_seconds": 33246, "cached_at": 1778993469, "first_pitch_utc": "2026-05-16T22:10:00+00:00", "has_data": true, "opponent": "Cleveland Guardians", "started": true, "team": "Reds", "team_key": "reds"}, {"age_seconds": 33247, "cached_at": 1778993468, "first_pitch_utc": "2026-05-16T22:10:00+00:00", "has_data": true, "opponent": "Cincinnati Reds", "started": true, "team": "Guardians", "team_key": "guardians"}, {"age_seconds": 33245, "cached_at": 1778993470, "first_pitch_utc": "2026-05-16T19:10:00+00:00", "has_data": true, "opponent": "Arizona Diamondbacks", "started": true, "team": "Rockies", "team_key": "rockies"}, {"age_seconds": 33213, "cached_at": 1778993502, "first_pitch_utc": "2026-05-16T17:10:00+00:00", "has_data": true, "opponent": "Toronto Blue Jays", "started": true, "team": "Tigers", "team_key": "tigers"}, {"age_seconds": 63311, "cached_at": 1778963404, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Texas Rangers", "started": true, "team": "Astros", "team_key": "astros"}, {"age_seconds": 33236, "cached_at": 1778993479, "first_pitch_utc": "2026-05-16T18:15:00+00:00", "has_data": true, "opponent": "St. Louis Cardinals", "started": true, "team": "Royals", "team_key": "royals"}, {"age_seconds": 57608, "cached_at": 1778969107, "first_pitch_utc": "2026-05-17T01:38:00+00:00", "has_data": true, "opponent": "Los Angeles Angels", "started": true, "team": "Dodgers", "team_key": "dodgers"}, {"age_seconds": 33234, "cached_at": 1778993481, "first_pitch_utc": "2026-05-16T20:05:00+00:00", "has_data": true, "opponent": "Baltimore Orioles", "started": true, "team": "Nationals", "team_key": "nationals"}, {"age_seconds": 33230, "cached_at": 1778993485, "first_pitch_utc": "2026-05-16T23:15:00+00:00", "has_data": true, "opponent": "New York Yankees", "started": true, "team": "Mets", "team_key": "mets"}, {"age_seconds": 56410, "cached_at": 1778970305, "first_pitch_utc": "2026-05-17T01:40:00+00:00", "has_data": true, "opponent": "San Francisco Giants", "started": true, "team": "Athletics", "team_key": "athletics"}, {"age_seconds": 33205, "cached_at": 1778993510, "first_pitch_utc": "2026-05-16T20:05:00+00:00", "has_data": true, "opponent": "Philadelphia Phillies", "started": true, "team": "Pirates", "team_key": "pirates"}, {"age_seconds": 33269, "cached_at": 1778993446, "first_pitch_utc": "2026-05-16T23:15:00+00:00", "has_data": true, "opponent": "San Diego Padres", "started": true, "team": "Mariners", "team_key": "mariners"}, {"age_seconds": 56408, "cached_at": 1778970307, "first_pitch_utc": "2026-05-17T01:40:00+00:00", "has_data": true, "opponent": "Athletics", "started": true, "team": "Giants", "team_key": "giants"}, {"age_seconds": 8, "cached_at": 1779026707, "first_pitch_utc": "2026-05-17T16:15:00+00:00", "has_data": true, "opponent": "Miami Marlins", "started": false, "team": "Rays", "team_key": "rays"}, {"age_seconds": 63309, "cached_at": 1778963406, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Houston Astros", "started": true, "team": "Rangers", "team_key": "rangers"}, {"age_seconds": 33214, "cached_at": 1778993501, "first_pitch_utc": "2026-05-16T17:10:00+00:00", "has_data": true, "opponent": "Detroit Tigers", "started": true, "team": "Blue Jays", "team_key": "bluejays"}, {"age_seconds": 33209, "cached_at": 1778993506, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Milwaukee Brewers", "started": true, "team": "Twins", "team_key": "twins"}, {"age_seconds": 33206, "cached_at": 1778993509, "first_pitch_utc": "2026-05-16T20:05:00+00:00", "has_data": true, "opponent": "Pittsburgh Pirates", "started": true, "team": "Phillies", "team_key": "phillies"}, {"age_seconds": 63010, "cached_at": 1778963705, "first_pitch_utc": "2026-05-16T23:15:00+00:00", "has_data": true, "opponent": "Boston Red Sox", "started": true, "team": "Braves", "team_key": "braves"}, {"age_seconds": 4, "cached_at": 1779026711, "first_pitch_utc": "2026-05-17T16:15:00+00:00", "has_data": true, "opponent": "Tampa Bay Rays", "started": false, "team": "Marlins", "team_key": "marlins"}, {"age_seconds": 33228, "cached_at": 1778993487, "first_pitch_utc": "2026-05-16T23:15:00+00:00", "has_data": true, "opponent": "New York Mets", "started": true, "team": "Yankees", "team_key": "yankees"}, {"age_seconds": 33206, "cached_at": 1778993509, "first_pitch_utc": "2026-05-16T23:10:00+00:00", "has_data": true, "opponent": "Minnesota Twins", "started": true, "team": "Brewers", "team_key": "brewers"}], "generated_at_unix": 1779026711, "market_arrows": {"batter_doubles": {"significance": "\u2193", "stability": "\u2193"}, "batter_hits": {"significance": "\u2192", "stability": "\u2193"}, "batter_hits_runs_rbis": {"significance": "\u2192", "stability": "\u2192"}, "batter_rbis": {"significance": "\u2192", "stability": "\u2193"}, "batter_runs_scored": {"significance": "\u2192", "stability": "\u2192"}, "batter_strikeouts": {"significance": "\u2192", "stability": "\u2193"}, "batter_total_bases": {"significance": "\u2193", "stability": "\u2193"}, "batter_walks": {"significance": "\u2193", "stability": "\u2193"}, "pitcher_outs": {"significance": "\u2192", "stability": "\u2192"}, "pitcher_strikeouts": {"significance": "\u2193", "stability": "\u2193"}}, "n": 5, "parlay_top2": null, "parlay_top3": null, "top_picks": [{"book": "fanduel", "confidence": 0.907, "edge": 0.2035, "fair_prob": 0.4392, "first_pitch_utc": "2026-05-17T16:15:00+00:00", "full_name": "Drew Rasmussen", "game_pk": 822982, "implied_prob": 0.4673, "kelly_frac": 0.0412, "line": 17.5, "locked_bet_id": 7450, "market": "pitcher_outs", "model_prob": 0.6427, "name": "Rasmussen", "placed": false, "placed_price": null, "placed_stake": null, "player_id": 656876, "price": 114, "rank_score": 0.03737, "side": "Under", "stake": 4.12, "team": "Rays", "team_key": "rays"}], "total_positive_kelly_plays": 1};
 
 // MLB team primary colors (or alternate when primary is too light for white text).
 const TEAM_COLORS = {
@@ -1526,18 +1557,33 @@ function renderTopPicks(picks, parlay3, parlay2, marketArrows) {
   }, 0);
 
   const rows = picks.map((r, i) => {
-    const stakeUsd = (r.kelly_frac || 0) * BANKROLL_USD;
+    const recStake = (r.kelly_frac || 0) * BANKROLL_USD;
+    const placedStake = r.placed && r.placed_stake != null ? r.placed_stake : recStake;
     const dec = americanToDecimal(r.price);
     const mp = r.model_prob || 0;
-    const evUsd = stakeUsd * (mp * dec - 1);
+    const evUsd = recStake * (mp * dec - 1);
     const evClass = evUsd >= 0 ? 'ev-pos' : 'ev-neg';
     const conf = Math.round((r.confidence || 0) * 100);
     const confTone = r.confidence == null ? '' : r.confidence >= 0.90 ? 'conf-strong' : r.confidence >= 0.80 ? 'conf-mid' : 'conf-weak';
     const teamColor = TEAM_COLORS[r.team_key] || '#555';
     const arrowPair = marketArrows[r.market];
     const arrowHtml = arrowPair ? renderMarketArrows(arrowPair) : '';
+    const lockable = r.locked_bet_id != null;
+    const claimable = lockable;  // a pick is claimable iff its bet has been locked already
+    // Stake cell: input when placed (editable actual), static $ amount otherwise.
+    const stakeCell = r.placed
+      ? `<input type="number" step="0.01" min="0" class="tp-stake-input" value="${placedStake.toFixed(2)}" />`
+      : `<span class="tp-stake-amt">$${recStake.toFixed(2)}</span>`;
+    const claimBtn = claimable
+      ? `<button type="button" class="tp-claim ${r.placed ? 'placed' : ''}" data-placed="${r.placed ? '1' : '0'}">${r.placed ? 'Placed ✓' : 'Mark placed'}</button>`
+      : `<button type="button" class="tp-claim" disabled title="Bet not yet locked — try again after lineups post">Not locked</button>`;
     return `
-      <div class="tp-row">
+      <div class="tp-row${r.placed ? ' placed-row' : ''}"
+           data-team="${r.team_key || ''}" data-gamepk="${r.game_pk || ''}"
+           data-player="${r.player_id || ''}" data-market="${r.market || ''}"
+           data-line="${r.line != null ? r.line : ''}" data-book="${r.book || ''}"
+           data-side="${r.side || ''}" data-price="${r.price != null ? r.price : ''}"
+           data-recstake="${recStake.toFixed(2)}">
         <span class="tp-num">${i + 1}</span>
         <span class="tp-player">${r.team_key ? `<a href="/${r.team_key}/" class="tp-player-link" title="Open ${r.team_key} dashboard"><span class="mlb-team-pill" style="background:${teamColor}">${r.team || ''}</span>${r.full_name || r.name}</a>` : `<span class="mlb-team-pill" style="background:${teamColor}">${r.team || ''}</span>${r.full_name || r.name}`}</span>
         <span class="tp-bet">${marketLabel(r.market)}${arrowHtml} ${r.line != null ? r.line : ''} ${r.side || ''}</span>
@@ -1545,8 +1591,9 @@ function renderTopPicks(picks, parlay3, parlay2, marketArrows) {
         <span class="tp-price">${fmtAmerican(r.price)}</span>
         <span class="tp-edge">${fmtEdge(r.edge)}</span>
         <span class="tp-conf ${confTone}" title="Monte Carlo confidence — all surfaced picks already meet MIN_CONFIDENCE">${conf}%</span>
-        <span class="tp-stake">$${stakeUsd.toFixed(2)}</span>
+        <span class="tp-stake">${stakeCell}</span>
         <span class="tp-ev ${evClass}" title="Expected profit (stake × (p·dec − 1))">${evUsd >= 0 ? '+' : ''}$${evUsd.toFixed(2)}</span>
+        <span class="tp-claim-cell">${claimBtn}</span>
       </div>`;
   }).join('');
 
@@ -1574,6 +1621,84 @@ function renderTopPicks(picks, parlay3, parlay2, marketArrows) {
   box.querySelectorAll('.tp-parlay-panel').forEach((panelEl, i) => {
     wireParlayPanel(panelEl, wired[i].parlay, wired[i].pool);
   });
+
+  // Wire per-row claim button + editable stake input.
+  box.querySelectorAll('.tp-row').forEach(row => {
+    const btn = row.querySelector('.tp-claim');
+    if (btn && !btn.disabled) {
+      btn.addEventListener('click', () => claimRow(row, btn));
+    }
+    const stakeInput = row.querySelector('.tp-stake-input');
+    if (stakeInput) {
+      stakeInput.addEventListener('change', () => saveRowActuals(row, stakeInput));
+    }
+  });
+}
+
+function rowIdentity(row) {
+  const ds = row.dataset;
+  const num = v => v === '' || v == null ? null : Number(v);
+  return {
+    team_key: ds.team,
+    game_pk: num(ds.gamepk),
+    player_id: num(ds.player),
+    market: ds.market,
+    line: num(ds.line),
+    book: ds.book,
+    side: ds.side,
+  };
+}
+
+async function claimRow(row, btn) {
+  const placedNow = btn.dataset.placed === '1';
+  const placed = !placedNow;
+  const recStake = Number(row.dataset.recstake);
+  const body = Object.assign(rowIdentity(row), { placed });
+  // When marking placed for the first time, snapshot the recommended stake
+  // as the actual stake so the row's editable input has a sensible default.
+  if (placed) body.stake = recStake;
+  try {
+    const r = await fetch('/mlb/api/picks/claim', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error('claim failed');
+    btn.dataset.placed = placed ? '1' : '0';
+    btn.textContent = placed ? 'Placed ✓' : 'Mark placed';
+    btn.classList.toggle('placed', placed);
+    row.classList.toggle('placed-row', placed);
+    // Flip the stake cell between static text and editable input.
+    const stakeCell = row.querySelector('.tp-stake');
+    if (placed) {
+      stakeCell.innerHTML = `<input type="number" step="0.01" min="0" class="tp-stake-input" value="${recStake.toFixed(2)}" />`;
+      const newInput = stakeCell.querySelector('.tp-stake-input');
+      newInput.addEventListener('change', () => saveRowActuals(row, newInput));
+    } else {
+      stakeCell.innerHTML = `<span class="tp-stake-amt">$${recStake.toFixed(2)}</span>`;
+    }
+  } catch (e) {
+    btn.classList.add('claim-error');
+    setTimeout(() => btn.classList.remove('claim-error'), 1200);
+  }
+}
+
+async function saveRowActuals(row, input) {
+  const stake = Number(input.value);
+  if (!isFinite(stake) || stake < 0) return;
+  const body = Object.assign(rowIdentity(row), { placed: true, stake });
+  try {
+    const r = await fetch('/mlb/api/picks/claim', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error('save failed');
+    input.classList.add('actual-saved');
+    setTimeout(() => input.classList.remove('actual-saved'), 600);
+  } catch (e) {
+    input.classList.add('actual-error');
+  }
 }
 
 function renderFreshness(rows) {
